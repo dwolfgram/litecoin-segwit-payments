@@ -1,4 +1,5 @@
 const bitcoin = require('bitcoinjs-lib')
+const sb = require('satoshi-bitcoin')
 const request = require('request')
 const MIN_RELAY_FEE = 1000
 const DEFAULT_SAT_PER_BYTE = 30
@@ -9,7 +10,7 @@ function LitecoinSegwitPayments (options) {
   self.options = Object.assign({}, options || {})
   if (!self.options.insightUrl) {
     self.options.insightUrl = 'https://insight.litecore.io/api/'
-    console.log('WARN: Using default bitcoin block explorer. It is highly suggested you set one yourself!', self.options.insightUrl)
+    console.log('WARN: Using default litecoin block explorer. It is highly suggested you set one yourself!', self.options.insightUrl)
   }
   if (!self.options.feePerKb) {
     self.options.feePerByte = DEFAULT_SAT_PER_BYTE
@@ -81,30 +82,18 @@ LitecoinSegwitPayments.prototype.getUTXOs = function(node, network, done) {
 
 LitecoinSegwitPayments.prototype.broadcastTransaction = function(txObject, done, retryUrl, originalResponse) {
   let self = this
-  let textBody = '{"rawtx":"' + txObject.signedTx + '"}'
-  const broadcastHeaders = {
-    'pragma': 'no-cache',
-    'cookie': '__cfduid=d365c2b104e8c0e947ad9991de7515e131528318303',
-    'origin': 'https://blockexplorer.com',
-    'accept-encoding': 'gzip, deflate, br',
-    'accept-language': 'en-US,en;q=0.9,fr;q=0.8,es;q=0.7',
-    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36',
-    'content-type': 'application/json;charset=UTF-8',
-    'accept': 'application/json, text/plain, */*',
-    'cache-control': 'no-cache',
-    'authority': 'blockexplorer.com',
-    'referer': 'https://blockexplorer.com/tx/send'
-  }
+  let textBody = txObject.signedTx
+  console.log('textbody', textBody)
   let url
   if (retryUrl) url = retryUrl
-  else url = self.options.insightUrl
+  else url = 'https://ltc1.trezor.io/api/sendtx/'
   var options = {
-    url: url + 'tx/send',
+    url: url,
     method: 'POST',
-    headers: broadcastHeaders,
     body: textBody
   }
-  request(options, (error, response, body) => {
+  request(options, function (error, response, body) {
+    //console.log('response:', response)
     if (!error && response.statusCode === 200) {
       txObject.broadcasted = true
       done(null, txObject)
@@ -112,8 +101,8 @@ LitecoinSegwitPayments.prototype.broadcastTransaction = function(txObject, done,
       if (url !== retryUrl) { // First broadcast attempt. Lets try again.
         self.broadcastTransaction(txObject, done, self.options.backupBroadcastUrl, body)
       } else {
-      // Second attempt failed
-        done('unable to broadcast. Some debug info: ' + body.toString() + ' ---- ' + originalResponse.toString())
+        // Second attempt failed
+        done(new Error('unable to broadcast. Some debug info: ' + body.toString() + ' ---- ' + originalResponse.toString()))
       }
     }
   })
@@ -121,6 +110,7 @@ LitecoinSegwitPayments.prototype.broadcastTransaction = function(txObject, done,
 
 LitecoinSegwitPayments.prototype.getTransaction = function(node, network, to, amount, utxo, feePerByte) {
   let self = this
+  amount = sb.toSatoshi(amount)
   const txb = new bitcoin.TransactionBuilder(network)
   let totalBalance = 0
   if (utxo.length === 0) {
@@ -133,7 +123,7 @@ LitecoinSegwitPayments.prototype.getTransaction = function(node, network, to, am
   if (!feePerByte) feePerByte = self.options.feePerByte
   let txfee = estimateTxFee(feePerByte, utxo.length, 1, true)
   if (txfee < MIN_RELAY_FEE) txfee = MIN_RELAY_FEE
-  if ((amount + txfee) > totalBalance) return new Error('Balance too small!' + totalBalance + ' ' + txfee)
+  if ((amount - txfee) > totalBalance) return new Error('Balance too small!' + totalBalance + ' ' + txfee)
   txb.addOutput(to, amount - txfee)
   const wif = node.toWIF()
   const keyPair = bitcoin.ECPair.fromWIF(wif, network)
