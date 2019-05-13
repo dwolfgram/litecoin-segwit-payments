@@ -1,7 +1,7 @@
 const bitcoin = require('bitcoinjs-lib')
 const request = require('request')
 const MIN_RELAY_FEE = 1000
-const DEFAULT_SAT_PER_BYTE = 10
+const DEFAULT_SAT_PER_BYTE = 30
 
 function LitecoinSegwitPayments (options) {
   if (!(this instanceof LitecoinSegwitPayments)) return new LitecoinSegwitPayments(options)
@@ -104,7 +104,7 @@ LitecoinSegwitPayments.prototype.broadcastTransaction = function(txObject, done,
     headers: broadcastHeaders,
     body: textBody
   }
-  request(options, error, response, body => {
+  request(options, (error, response, body) => {
     if (!error && response.statusCode === 200) {
       txObject.broadcasted = true
       done(null, txObject)
