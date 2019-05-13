@@ -1,6 +1,5 @@
 const bitcoin = require('bitcoinjs-lib')
 const request = require('request')
-const networks = require('./networks')
 const MIN_RELAY_FEE = 1000
 const DEFAULT_SAT_PER_BYTE = 10
 
@@ -16,12 +15,10 @@ function LitecoinSegwitPayments (options) {
     self.options.feePerByte = DEFAULT_SAT_PER_BYTE
   }
   if (!self.options.network || (self.options.network === 'mainnet')) {
-    self.options.network = networks.mainnet
     if (!self.options.backupBroadcastUrl) {
       self.options.backupBroadcastUrl = 'https://ltc1.trezor.io/api/sendtx/'
     }
   } else if (self.options.network === 'testnet') {
-    self.options.network = networks.testnet
     if (!self.options.backupBroadcastUrl) {
       self.options.backupBroadcastUrl = 'https://ltc1.trezor.io/api/sendtx/'
     }
@@ -71,7 +68,7 @@ LitecoinSegwitPayments.prototype.getUTXOs = function(node, network, done) {
         delete utxo['ts']
         cleanUTXOs.push(utxo)
       })
-      if (self.options.network === bitcoin.networks.testnet) {
+      if (self.options.network === 'testnet') {
         console.log('TESTNET ENABLED: Clipping UTXO length to 2 for test purposes')
         cleanUTXOs = cleanUTXOs.slice(0, 2)
       }
