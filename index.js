@@ -35,6 +35,8 @@ LitecoinSegwitPayments.prototype.getAddress = function(node, network) {
   let { address } = bitcoin.payments.p2sh({
     redeem: bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey })
   })
+  const decoded = bitcoin.address.fromBase58Check(address)
+  address = bitcoin.address.toBase58Check(decoded['hash'], 50)
   return address
 }
 
