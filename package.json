@@ -1,5 +1,5 @@
 {
-  "name": "@faast/litecoin-segwit-payments",
+  "name": "litecoin-segwit-payments",
   "version": "0.0.1",
   "description": "lightweight litecoin payment processing with segwit",
   "main": "index.js",
@@ -11,17 +11,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/go-faast/litecoin-segwit-payments.git"
+    "url": "git+https://github.com/dwolfgram/litecoin-segwit-payments.git"
   },
   "keywords": [
     "litecoin",
     "segwit",
     "blockchain",
-    "faast",
     "bitaccess",
     "payments"
   ],
-  "author": "Moe Adham",
+  "author": "Dan Wolfgram",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/go-faast/litecoin-segwit-payments/issues"
