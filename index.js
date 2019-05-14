@@ -153,7 +153,7 @@ LitecoinSegwitPayments.prototype.transaction = function(node, coin, to, amount, 
 LitecoinSegwitPayments.prototype.getTxHistory = async function(address, done) {
   let self = this
   try {
-    const response = await axios.get(`${self.options.explorerUrl}txs`, {
+    const response = await axios.get(`${self.options.insightUrl}txs`, {
       params: {
         address: address
       }
