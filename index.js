@@ -97,7 +97,7 @@ LitecoinSegwitPayments.prototype.broadcastTransaction = function(txObject, done,
     //console.log('response:', response)
     if (!error && response.statusCode === 200) {
       txObject.broadcasted = true
-      done(null, txObject)
+      done(null, txObject.txid)
     } else {
       if (url !== retryUrl) { // First broadcast attempt. Lets try again.
         self.broadcastTransaction(txObject, done, self.options.backupBroadcastUrl, body)
@@ -128,14 +128,16 @@ LitecoinSegwitPayments.prototype.getTransaction = function(node, network, to, am
   txb.addOutput(to, amount - txfee)
   const wif = node.toWIF()
   const keyPair = bitcoin.ECPair.fromWIF(wif, network)
-  const pubKeyHash = bitcoin.crypto.ripemd160(bitcoin.crypto.sha256(keyPair.publicKey)).toString('hex')
-  const redeemScript = bitcoin.script.fromASM(`OP_DUP OP_HASH160 ${pubKeyHash} OP_EQUALVERIFY OP_CHECKSIG`)
+  const p2sh = bitcoin.payments.p2sh({
+    redeem: bitcoin.payments.p2wpkh({ pubkey: keyPair.publicKey })
+  })
   for (let i = 0; i < utxo.length; i++) {
     txb.sign(i,
       keyPair,
-      redeemScript,
+      p2sh.redeem.output,
       null, // Null for simple Segwit
-      utxo[i].satoshis
+      utxo[i].satoshis,
+      p2sh.redeem.witness
     )
   }
   return { signedTx: txb.build().toHex(), txid: txb.build().getId() }
