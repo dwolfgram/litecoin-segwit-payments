@@ -84,7 +84,6 @@ LitecoinSegwitPayments.prototype.getUTXOs = function(node, network, done) {
 LitecoinSegwitPayments.prototype.broadcastTransaction = function(txObject, done, retryUrl, originalResponse) {
   let self = this
   let textBody = txObject.signedTx
-  console.log('textbody', textBody)
   let url
   if (retryUrl) url = retryUrl
   else url = 'https://ltc1.trezor.io/api/sendtx/'
